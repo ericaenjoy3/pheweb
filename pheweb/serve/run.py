@@ -55,11 +55,11 @@ def gunicorn_is_broken():
             return True
     return False
 
-def print_ip(port):
+def print_ip(port, urlprefix):
     ip = get_ip()
-    print('If you can open a web browser on this computer (ie, the one running PheWeb), open http://localhost:{} .'.format(port))
+    print('If you can open a web browser on this computer (ie, the one running PheWeb), open http://localhost:{}/{} .'.format(port, urlprefix))
     print('')
-    print('If not, maybe http://{}:{} will work.'.format(ip, port))
+    print('If not, maybe http://{}:{}/{} will work.'.format(ip, port, urlprefix))
     print("If that link doesn't work, it's either because:")
     print("  - the IP {} is failing to route to this computer (eg, this computer is inside a NAT), or".format(ip))
     print("  - a firewall is blocking port {}.".format(port))
@@ -108,17 +108,22 @@ def run(argv):
     parser.add_argument('--num-workers', type=int, default=8, help='number of worker threads')
     parser.add_argument('--guess-address', action='store_true', help='guess the IP address')
     parser.add_argument('--open', action='store_true', help='try to open a web browser')
+    parser.add_argument('--urlprefix', default='', help='sub-path at which to host this server')
     args = parser.parse_args(argv)
 
+    from ..conf_utils import conf
+    conf.urlprefix = args.urlprefix
+    # TODO: does urlprefix need to start with '/'?  end with it?  be consistent and enforce it.
+
     if args.open:
-        if not attempt_open('http://localhost:{}'.format(args.port)) and not args.guess_address:
-            print_ip(args.port)
+        if not attempt_open('http://localhost:{}/{}'.format(args.port, conf.urlprefix)) and not args.guess_address:
+            print_ip(args.port, conf.urlprefix)
 
     if args.host != '0.0.0.0':
-        print('http://{}:{}'.format(args.host, args.port))
+        print('http://{}:{}/{}'.format(args.host, args.port, conf.urlprefix))
 
     if args.guess_address:
-        print_ip(args.port)
+        print_ip(args.port, conf.urlprefix)
 
     from .server import app
     if gunicorn_is_broken():
