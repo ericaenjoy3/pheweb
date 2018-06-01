@@ -69,7 +69,7 @@ def compute_qq(neglog10_pvals):
         return []
 
     max_exp_neglog10_pval = -math.log10(0.5 / len(neglog10_pvals))
-    max_obs_neglog10_pval = neglog10_pvals[0]
+    max_obs_neglog10_pval = max(max_exp_neglog10_pval, min(9, neglog10_pvals[0])) # matches the javascript
 
     if max_obs_neglog10_pval == 0:
         print('WARNING: All pvalues are 1! How is that supposed to make a QQ plot?')
@@ -77,6 +77,7 @@ def compute_qq(neglog10_pvals):
 
     occupied_bins = set()
     for i, obs_neglog10_pval in enumerate(neglog10_pvals):
+        if obs_neglog10_pval > max_obs_neglog10_pval: continue
         exp_neglog10_pval = -math.log10( (i+0.5) / len(neglog10_pvals))
         exp_bin = int(exp_neglog10_pval / max_exp_neglog10_pval * NUM_BINS)
         obs_bin = int(obs_neglog10_pval / max_obs_neglog10_pval * NUM_BINS)
